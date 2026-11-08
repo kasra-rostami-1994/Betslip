@@ -1,3 +1,5 @@
+const { version } = require("react");
+
 /* ui.js: نماها (بلیت‌ها، ریسک، تاریخچه، سطل، رتبه‌بندی، پروفایل) */
 const U = { tab: 'bets', sort: ls.g('srt') || 'risk', tag: '', q: '', cls: '', fil: null, sel: null, open: new Set(), range: ls.g('rng') || '30', gran: 'auto', hres: '', hrange: 'all', pubBets: null, board: null, rank: null, pu: null, share: null };
 try { JSON.parse(ls.g('open') || '[]').forEach((i) => U.open.add(i)); } catch (e) {}
@@ -124,7 +126,7 @@ function vShare() {
 const TABS = [['bets', 'بلیت‌ها'], ['risk', 'ریسک'], ['hist', 'تاریخچه'], ['stats', 'آمار'], ['board', 'رتبه‌بندی']];
 function mountShell() {
   $('#root').innerHTML = `<header><div class="wrap hd"><div class="brand" data-a="go" data-v="bets"><i></i>betslip</div><nav id="nav"></nav><span id="sync" data-s="idle"></span><div id="acc"></div></div></header><main class="wrap" id="view"></main><footer id="ver"></footer><div id="menu" class="menu" hidden></div><div id="dlg"></div><div id="toast"></div>`;
-  $('#ver').textContent = 'Betslip - Update: ' + VER;
+  $('#ver').textContent = 'Betslip - Update: ' + version;
 }
 function renderHead() {
   const guest = !S.tok;
