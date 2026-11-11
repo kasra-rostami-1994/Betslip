@@ -90,7 +90,7 @@ function betRow(b, s, mode) {
   const visMap = getVIS();
 
   const acts = pub ? '' : `<div class="acts">
-    <button class="lnk" data-a="tog" data-id="${id}">${open ? (CL === 'en' ? 'Close Details ▴' : 'بستن جزئیات ▴') : (CL === 'en' ? 'Game Details ▾' : 'جزئیات بازی‌ها ▾')}</button>
+    <button class="lnk" data-a="tg" data-id="${id}">${open ? (CL === 'en' ? 'Close Details ▴' : 'بستن جزئیات ▴') : (CL === 'en' ? 'Game Details ▾' : 'جزئیات بازی‌ها ▾')}</button>
     <button class="lnk" data-a="ed" data-id="${id}">${T('edit')}</button>
     ${hist ? '' : `<button class="lnk" data-a="co" data-id="${id}">${T('cashout_btn')}</button>`}
     <select data-a="vis" data-id="${id}" title="${T('default_vis')}">
@@ -410,7 +410,7 @@ function vMe() {
       <button class="btn" data-a="exp">${T('export_btn')}</button>
       <button class="btn" data-a="imp">${T('import_btn')}</button>
       <button class="btn" data-a="bak">${T('backup_btn')}</button>
-      <button class="btn" data-a="tg">${T('tg_btn')}</button>
+      <button class="btn" data-a="tgn">${T('tg_btn')}</button>
     </div>
   </div>
   <div class="card" style="padding:18px 20px;margin-bottom:14px">
@@ -458,10 +458,10 @@ function mountShell() {
       <span class="sp"></span>
       <span id="upd"></span>
       <button class="btn sq" data-a="rf" title="${CL === 'en' ? 'Refresh' : 'به‌روزرسانی'}">↻</button>
-      <button class="btn p" data-a="add">${T('add_bet')}</button>
+      <button class="btn pri" data-a="add">+ ${T('add_bet')}</button>
       <button class="btn" data-a="exp">${T('export_json')}</button>
       <button class="btn" data-a="imp">${T('import_json')}</button>
-      <button class="btn sq" data-a="tg" title="${T('tg_btn')}">⚙</button>
+      <button class="btn sq" data-a="tgn" title="${T('tg_btn')}">⚙</button>
       <button class="btn" data-a="lang" title="${CL === 'fa' ? 'Switch to English' : 'تغییر به فارسی'}" style="min-width:44px">${CL === 'fa' ? 'EN' : 'FA'}</button>
       <button class="btn" data-a="out">${T('logout')}</button>
       <span id="sync" data-s="idle" style="display:none"></span>

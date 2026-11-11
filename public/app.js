@@ -1,4 +1,4 @@
-/* app.js: مسیریابی، اکشن‌ها، زمان‌بندی نتایج، راه‌اندازی */
+/* app.js: مسیریابی، اکشن‌ها، باز/بسته کردن جزئیات بلیت، زمان‌بندی نتایج */
 const ent = new URLSearchParams(location.search);
 U.entry = ent.get('s') ? { tab: 'share', t: ent.get('s') } : ent.get('u') ? { tab: 'u', u: ent.get('u') } : null;
 
@@ -9,7 +9,7 @@ function route() {
   if (!S.tok && !['board', 'u'].includes(U.tab)) U.tab = 'board';
 }
 
-async function enter() { // بارگیری داده‌های هر صفحه
+async function enter() {
   U.pubBets = null;
   try {
     if (U.tab === 'board' && !U.board) { U.board = (await api('/api/profile?board=1')).rows; if (S.me) U.rank = (U.board.findIndex((r) => r.u === S.me) + 1) || null; render(); }
@@ -22,26 +22,50 @@ async function enter() { // بارگیری داده‌های هر صفحه
 const go = (v) => { U.entry = null; if (location.hash === '#/' + v) { route(); enter(); render(); } else location.hash = '#/' + v; };
 window.addEventListener('hashchange', () => { U.entry = null; U.sel = null; route(); enter(); render(); scrollTo(0, 0); });
 
-/* ---- اکشن‌ها ---- */
+/* ---- ذخیره وضعیت باز/بسته بودن بلیت‌ها ---- */
 const keepOpen = () => ls.s('open', JSON.stringify([...U.open]));
 const refresh = () => (U.tab === 'bets' || U.tab === 'hist' ? renderList() : render());
+
+/* ---- اکشن‌ها ---- */
 const ACT = {
   go: (a) => go(a.dataset.v),
   login: () => showLogin(),
-  add: () => openEditor(null), rf: async () => { toast(CL === 'en' ? 'Updating live scores…' : 'در حال به‌روزرسانی نتایج…'); await liveFetch(); render(); if (window.updateSourcesText) updateSourcesText(); },
+  add: () => openEditor(null),
   lang: () => setLang(CL === 'fa' ? 'en' : 'fa'),
+  rf: async () => {
+    toast(CL === 'en' ? 'Updating live scores…' : 'در حال به‌روزرسانی نتایج…');
+    await liveFetch();
+    render();
+    if (window.updateSourcesText) updateSourcesText();
+  },
+  // باز و بسته کردن جزئیات بلیت (تضمینی با هر دو شناسه tg و tog)
+  tg: (a, e) => {
+    const id = a.dataset.id || a.dataset.b;
+    if (!id) return;
+    if (U.open.has(id)) U.open.delete(id);
+    else U.open.add(id);
+    keepOpen();
+    render();
+  },
+  tog: (a, e) => {
+    const id = a.dataset.id || a.dataset.b;
+    if (!id) return;
+    if (U.open.has(id)) U.open.delete(id);
+    else U.open.add(id);
+    keepOpen();
+    render();
+  },
   menu: (a, e) => {
     const m = $('#menu'); if (!m.hidden) { m.hidden = true; return; }
     m.innerHTML = [
       ['me', T('my_profile')], ['stats', T('all_stats')], ['trash', T('trash_menu') + ' (' + S.trash.length + ')'],
       ['-'],
-      ['exp', T('export_json')], ['imp', T('import_json')], ['bak', T('daily_backup')], ['tg', T('tg_notify')],
+      ['exp', T('export_json')], ['imp', T('import_json')], ['bak', T('daily_backup')], ['tgn', T('tg_notify')],
       ['-'],
       ['out', T('logout')]
     ].map(([k, v]) => (k === '-' ? '<hr>' : `<a data-a="${['me', 'stats', 'trash'].includes(k) ? 'go' : k}" data-v="${k}">${v}</a>`)).join('');
     m.hidden = false; e.stopPropagation();
   },
-  tog: (a, e) => { if (e.target.closest('input,select,button,a')) return; const id = a.dataset.id; U.open.has(id) ? U.open.delete(id) : U.open.add(id); keepOpen(); refresh(); },
   ck: (a) => { const id = a.dataset.id; U.sel.has(id) ? U.sel.delete(id) : U.sel.add(id); bulk(); },
   ed: (a) => openEditor(B(a.dataset.id)),
   co: (a) => openCo(B(a.dataset.id)),
@@ -84,7 +108,7 @@ const ACT = {
   exp: () => exportJson(),
   imp: () => $('#fi').click(),
   bak: () => openBackup(),
-  tg: () => openTg(),
+  tgn: () => openTg(),
   out: async () => {
     try { await api('/api/auth', { method: 'POST', body: { action: 'logout' } }); } catch (e) {}
     ['tok', 'me'].forEach((k) => ls.s(k, '')); S.tok = ''; S.me = ''; S.bets = []; S.trash = []; S.prof = null; SNAP = {}; U.entry = null;
@@ -105,11 +129,15 @@ const ACT = {
   },
 };
 
+// هندلر کلیک بدون مسدود کردن دکمه‌های تاگل و اکشن
 document.addEventListener('click', (e) => {
   const m = $('#menu'); if (m && !m.hidden && !e.target.closest('#menu')) m.hidden = true;
-  const a = e.target.closest('[data-a]'); if (!a || /^(SELECT|TEXTAREA)$/.test(a.tagName) || (a.tagName === 'INPUT' && a.type !== 'checkbox') || a.dataset.a === 'vis' || a.dataset.a === 'q') return;
+  const a = e.target.closest('[data-a]');
+  if (!a) return;
+  if (/^(SELECT|TEXTAREA)$/.test(a.tagName) || (a.tagName === 'INPUT' && a.type !== 'checkbox') || a.dataset.a === 'vis' || a.dataset.a === 'q') return;
   if (a.tagName === 'INPUT' && a.type === 'checkbox') return;
-  const f = ACT[a.dataset.a]; if (!f) return;
+  const f = ACT[a.dataset.a];
+  if (!f) return;
   if (a.tagName === 'A') e.preventDefault();
   if (a.closest('#menu')) m.hidden = true;
   f(a, e);
