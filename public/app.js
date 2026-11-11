@@ -28,7 +28,7 @@ const refresh = () => (U.tab === 'bets' || U.tab === 'hist' ? renderList() : ren
 const ACT = {
   go: (a) => go(a.dataset.v),
   login: () => showLogin(),
-  add: () => openEditor(null),
+  add: () => openEditor(null), rf: async () => { toast(CL === 'en' ? 'Updating live scores…' : 'در حال به‌روزرسانی نتایج…'); await liveFetch(); render(); if (window.updateSourcesText) updateSourcesText(); },
   lang: () => setLang(CL === 'fa' ? 'en' : 'fa'),
   menu: (a, e) => {
     const m = $('#menu'); if (!m.hidden) { m.hidden = true; return; }
