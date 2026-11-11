@@ -1,4 +1,4 @@
-Betslip - Update: 2.1.0 (Betslip Update 15)
+Betslip - Update: 2.2.0 (Betslip Update 16)
 
 
 # Betslip
