@@ -82,8 +82,8 @@ const gk = (l) => fold(l.home) + '|' + fold(l.away);
 // نتیجهٔ یک پا: ورود دستی > نتیجهٔ ذخیره‌شده > رأی‌گیری بین منابع زنده
 function cons(l, LV, now) {
   now = now || Date.now();
-  if (l.ov) return { h: l.ov.h, a: l.ov.a, w: l.ov.w, st: l.ov.f ? 'post' : 'in', min: l.ov.m || 45, man: 1, clk: l.ov.f ? 'پایان (دستی)' : 'زنده (دستی)', lg: l.ov.lg || l.lg, cy: l.ov.cy || l.cy };
-  if (l.fin && !(l.fin.t && new Date(l.fin.t) > now)) return { h: l.fin.h, a: l.fin.a, w: l.fin.w, st: 'post', t: l.fin.t ? new Date(l.fin.t) : null, clk: 'پایان', fin: 1, lg: l.fin.lg || l.lg, cy: l.fin.cy || l.cy };
+  if (l.ov) return { h: l.ov.h, a: l.ov.a, w: l.ov.w, st: l.ov.f ? 'post' : 'in', min: l.ov.m || 45, man: 1, clk: l.ov.f ? 'پایان (دستی)' : 'زنده (دستی)' };
+  if (l.fin && !(l.fin.t && new Date(l.fin.t) > now)) return { h: l.fin.h, a: l.fin.a, w: l.fin.w, st: 'post', t: l.fin.t ? new Date(l.fin.t) : null, clk: 'پایان', fin: 1, lg: l.fin.lg || l.lg, co: l.fin.co || l.co };
   const H0 = (LV || []).filter((e) => mt(l, e));
   if (!H0.length) return null;
   const bs = {};
@@ -92,7 +92,7 @@ function cons(l, LV, now) {
   H.forEach((e) => (g[e.h + '-' + e.a] = g[e.h + '-' + e.a] || []).push(e));
   const G = Object.values(g).sort((a, b) => b.length - a.length || a[0].p - b[0].p), r = G[0][0];
   const fut = r.st == 'post' && r.t && new Date(r.t) > now + 6e4;
-  return { h: r.h, a: r.a, st: fut ? 'pre' : r.st, clk: r.pp ? 'تعویق/لغو' : r.clk, min: r.min, t: r.t ? new Date(r.t) : null, over: r.over, w: r.w, aet: r.aet, pp: r.pp, lg: r.lg || (H.find((e) => e.lg) || {}).lg || l.lg, cy: r.cy || (H.find((e) => e.cy) || {}).cy || l.cy, goals: r.goals, ref: r.home + ' – ' + r.away,
+  return { h: r.h, a: r.a, st: fut ? 'pre' : r.st, clk: r.pp ? 'تعویق/لغو' : r.clk, min: r.min, t: r.t ? new Date(r.t) : null, over: r.over, w: r.w, aet: r.aet, pp: r.pp, lg: r.lg || (H.find((e) => e.lg) || {}).lg || l.lg, co: r.co || (H.find((e) => e.co) || {}).co || l.co, goals: r.goals, ref: r.home + ' – ' + r.away,
     src: G.map((q) => [[...new Set(q.map((e) => SN[e.s] || e.s))].join('+'), q[0].h + '-' + q[0].a]), cf: G.length > 1 };
 }
 // وضعیت کامل یک بلیت (هم در سایت و هم در سرور/ربات یکسان)

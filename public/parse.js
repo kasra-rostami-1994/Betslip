@@ -33,13 +33,13 @@ function parseBuilder(t){
    const home=fx[1].trim(),away=fx[2].trim(),picks=[],miss=[];
    buf.forEach(b=>{const p=bbPick(b.cat,b.sel,b.period,home,away);if(p)picks.push(p);else miss.push(b.cat+' - '+b.sel+' ('+b.period+')')});
    if(picks.length)legs.push({home,away,pick:picks.join('&'),odds:null});
-   if(miss.length)W.push((CL==='en'?'Unknown market(s) for ':'بازار(های) ناشناخته برای ')+home+' - '+away+': '+miss.join('، '));
+   if(miss.length)W.push('بازار(های) ناشناخته برای '+home+' - '+away+': '+miss.join('، '));
    buf=[]}
  }
  if(!legs.length)return null;
  const w=L.findIndex(s=>/^Potential win/i.test(s)),n=w>=0?L.slice(w+1).filter(s=>/^[\d.,]+$/.test(s)).map(num):[];
  const c=L.findIndex(s=>/^Cash out$/i.test(s)),cv=c>=0?num(L[c+1]):NaN;
- if(!n[0])W.push(CL==='en'?'Total odds not found in text; temporarily set to 1.':'ضریب کل در متن پیدا نشد؛ موقتاً ۱ گذاشته شد و باید دستی اصلاح شود.');
+ if(!n[0])W.push('ضریب کل در متن پیدا نشد؛ موقتاً ۱ گذاشته شد و باید دستی اصلاح شود.');
  const odds=n[0]||1,stake=n[1]||1,mn=L.find(s=>/^multi\s+\d+/i.test(s));
  return{name:mn||'multi '+legs.length,stake,odds,win:n[2]||+(stake*odds).toFixed(2),cash:isNaN(cv)?null:cv,legs,_w:W.join('\n')}}
 function parseBlock(t){
@@ -52,38 +52,11 @@ function parseBlock(t){
  const c=L.findIndex(s=>/^Cash out$/i.test(s)),cv=c>=0?num(L[c+1]):NaN;
  const odds=n[0]||+legs.reduce((p,l)=>p*l.odds,1).toFixed(2),stake=n[1]||1;
  const mn=L.find(s=>/^multi\s+\d+/i.test(s)),ex=mn?+mn.match(/\d+/)[0]:0,pd=legs.reduce((p,l)=>p*l.odds,1),W=[];
- if(ex&&ex!=legs.length)W.push(CL==='en'?`Text stated ${ex} games but ${legs.length} games were detected.`:`در متن ${ex} بازی نوشته شده ولی ${legs.length} بازی تشخیص داده شد.`);
- if(n[0]&&Math.abs(pd-n[0])/n[0]>.04)W.push(CL==='en'?`Total odds (${n[0]}) does not match product of legs (${pd.toFixed(2)}); a leg may be missing.`:`ضریب کل (${n[0]}) با حاصل‌ضرب ضرایب بازی‌ها (${pd.toFixed(2)}) نمی‌خواند؛ شاید بازی‌ای جا افتاده باشد.`);
+ if(ex&&ex!=legs.length)W.push('در متن '+ex+' بازی نوشته شده ولی '+legs.length+' بازی تشخیص داده شد.');
+ if(n[0]&&Math.abs(pd-n[0])/n[0]>.04)W.push('ضریب کل ('+n[0]+') با حاصل‌ضرب ضرایب بازی‌ها ('+pd.toFixed(2)+') نمی‌خواند؛ شاید بازی‌ای جا افتاده باشد.');
  return{name:mn||'multi '+legs.length,stake,odds,win:n[2]||+(stake*odds).toFixed(2),cash:isNaN(cv)?null:cv,legs,_w:W.join('\n')}}
 
-const CT=[
-  ['1','برد میزبان','Home Win'],
-  ['2','برد میهمان','Away Win'],
-  ['X','مساوی','Draw'],
-  ['1X','میزبان یا مساوی','Home or Draw'],
-  ['X2','مساوی یا میهمان','Draw or Away'],
-  ['12','بدون مساوی','No Draw (Any Win)'],
-  ['O','مجموع گل بالای … (مقدار: 2.5)','Total Goals Over (e.g. 2.5)'],
-  ['U','مجموع گل زیر … (مقدار: 3.5)','Total Goals Under (e.g. 3.5)'],
-  ['HO','گل میزبان بالای …','Home Goals Over'],
-  ['HU','گل میزبان زیر …','Home Goals Under'],
-  ['AO','گل میهمان بالای …','Away Goals Over'],
-  ['AU','گل میهمان زیر …','Away Goals Under'],
-  ['Q1','صعود میزبان (کل بازی، با وقت اضافه و پنالتی)','Home Qualify (inc. ET/pens)'],
-  ['Q2','صعود میهمان (کل بازی)','Away Qualify (inc. ET/pens)'],
-  ['BY','هر دو تیم گل می‌زنند','Both Teams to Score (Yes)'],
-  ['BN','حداقل یک تیم گل نمی‌زند','Not Both Teams to Score (No)'],
-  ['T','تعداد دقیق کل گل … (مقدار: 3)','Exact Goals Count (e.g. 3)'],
-  ['S','نتیجهٔ دقیق … (مقدار: 2-1)','Exact Scoreline (e.g. 2-1)'],
-  ['AH1','هندیکپ میزبان … (مقدار: -1.5)','Home Asian Handicap (e.g. -1.5)'],
-  ['AH2','هندیکپ میهمان … (مقدار: +0.5)','Away Asian Handicap (e.g. +0.5)'],
-  ['KO','مجموع کارت‌ها بالای … (مقدار: 7.5)','Total Cards Over (e.g. 7.5)'],
-  ['KU','مجموع کارت‌ها زیر …','Total Cards Under'],
-  ['CO','مجموع کرنر بالای … (مقدار: 4.5)','Total Corners Over (e.g. 4.5)'],
-  ['CU','مجموع کرنر زیر …','Total Corners Under'],
-  ['EKO','هر دو تیم کارت بالای …','Each Team Cards Over'],
-  ['ECO','هر دو تیم کرنر بالای …','Each Team Corners Over']
-];
+const CT=[['1','برد میزبان'],['2','برد میهمان'],['X','مساوی'],['1X','میزبان یا مساوی'],['X2','مساوی یا میهمان'],['12','بدون مساوی'],['O','مجموع گل بالای … (مقدار: 2.5)'],['U','مجموع گل زیر … (مقدار: 3.5)'],['HO','گل میزبان بالای …'],['HU','گل میزبان زیر …'],['AO','گل میهمان بالای …'],['AU','گل میهمان زیر …'],['Q1','صعود میزبان (کل بازی، با وقت اضافه و پنالتی)'],['Q2','صعود میهمان (کل بازی)'],['BY','هر دو تیم گل می‌زنند'],['BN','حداقل یک تیم گل نمی‌زند'],['T','تعداد دقیق کل گل … (مقدار: 3)'],['S','نتیجهٔ دقیق … (مقدار: 2-1)'],['AH1','هندیکپ میزبان … (مقدار: -1.5)'],['AH2','هندیکپ میهمان … (مقدار: +0.5)'],['KO','مجموع کارت‌ها بالای … (مقدار: 7.5)'],['KU','مجموع کارت‌ها زیر …'],['CO','مجموع کرنر بالای … (مقدار: 4.5)'],['CU','مجموع کرنر زیر …'],['EKO','هر دو تیم کارت بالای …'],['ECO','هر دو تیم کرنر بالای …']];
 const needV=c=>!['1','2','X','1X','X2','12','BY','BN','Q1','Q2'].includes(c);
 
 function parseManual(t,f){
