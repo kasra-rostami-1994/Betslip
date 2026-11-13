@@ -10,7 +10,7 @@ A personal sports-betting tracker ("Betslip") for one person (and now a small mu
 - Has a risk view (which live games threaten which bets), full statistics with time-range analysis and charts, a trash/archive system, daily automatic backups, a Telegram bot + push notifications, and the beginnings of a social layer (public profiles, leaderboard, score).
 - Is hosted at **kasrarostami.ir** (personal site built with GitHub + Vercel). Betslip itself is deployed as its own Vercel project, reachable either as a subdomain (`betslip.kasrarostami.ir`, via a CNAME) or as a path (`kasrarostami.ir/betslip`, via `rewrites` in the main site's `vercel.json`/`next.config.js`). Both have been used across this project's history — check which one is currently wired up before assuming.
 
-Current version: **2.2.0** ("Betslip Update 16"). The owner's convention: every shipped change gets a version bump and a one-line summary in the format `Betslip Update : x.y.z - Short Comma Separated List Of Changes (Betslip Update N)`, and a zip of the whole project named `Betslip Update N`. Keep following this convention unless the owner says otherwise.
+Current version: **2.0.0** ("Betslip Update 14"). The owner's convention: every shipped change gets a version bump and a one-line summary in the format `Betslip Update : x.y.z - Short Comma Separated List Of Changes (Betslip Update N)`, and a zip of the whole project named `Betslip Update N`. Keep following this convention unless the owner says otherwise.
 
 ## 2. Stack & hosting
 
@@ -191,11 +191,6 @@ Every piece of this project was built and iterated **entirely inside a sandboxed
 2. Rebuilt as a real Vercel+Upstash platform: accounts, server-stored bets, share links, archive/history, basic stats.
 3. Progressively added: more live-result sources (Sofascore, football-data.org, API-Football, TheSportsDB) merged with majority-vote + source-name display; manual game-by-game bet entry with a full pick-code picker; 90-minute-regulation-time rule + qualification (`Q1`/`Q2`) exception; risk view (which live games threaten which active bets, sorted by severity, unstarted games pushed to the bottom); bet editing; bulk archive/delete; trash with 30-day recovery; auto-archiving of bets with a confirmed, finished losing leg (and hiding games that only appear in auto-archived bets from the risk view); tags & notes; cash-out calculator; monthly P/L chart + per-league stats; Telegram bot + push notifications (iteratively debugged — see §9); JSON export; parser hardening for live-in-progress score annotations in pasted text and for footer-line format variants.
 4. **v2.0.0 ("Update 14")**: the big rewrite covered by this document — new UI/UX (Yekan font, minimal redesign), full statistics overhaul with time-range + chart analysis, per-bet diff-sync data layer (fixes data loss), daily auto-backups, user profiles with public/private/link-only bet visibility, a leaderboard/scoring system (foundation for the "see other users' stats" feature the owner wants to build out later), and `/history`+`/hbet`+`/status` Telegram commands.
-5. **v2.2.0 ("Update 16")**:
-   - اضافه شدن کشور، لیگ و نام تورنمنت در تمامی بخش‌ها و نماهای بازی‌ها (بلیت‌های فعال، تاریخچه، ریسک مشترک، نقشه دستی بازی و آمار).
-   - دو زبانه شدن کامل سایت (فارسی و انگلیسی) با سوئیچ سریع در هدر، حفظ زبان انتخابی در localStorage، تنظیم هوشمند جهت صفحه (RTL/LTR) و تقویم و متون.
-   - بهبود بخش آمار و نمودارهای SVG با گرادیانت مدرن، اضافه شدن بازه‌های زمانی جدید (۱۸۰ روز، یک سال، همهٔ زمان‌ها) و مرتب‌سازی درصدهای آماری به صورت نزولی بر اساس درصد برد همراه با کشور و لیگ.
-   - رفع باگ require('react') در ui.js و به‌روزرسانی نسخه فوتر سایت به Betslip v2.2.0 (Update 16).
 
 ## 12a. Recommended: build a Graphify knowledge graph before continuing
 
