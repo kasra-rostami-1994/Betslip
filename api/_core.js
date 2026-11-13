@@ -16,11 +16,7 @@ const mt=(l,e)=>l.map?(e.home==l.map.h&&e.away==l.map.a):(same(l.home,e.home)&&s
 const gr=d=>d>1e-9?'W':d<-1e-9?'L':'P';
 const comb=a=>{const w=a.filter(x=>x=='W').length,l=a.filter(x=>x=='L').length;return w==a.length?'W':l==a.length?'L':w+l==0?'P':l?'HL':'HW'};
 const subs=L=>(Math.abs(L)*4)%2==1?[L-.25,L+.25]:[L];
-const SCOPE_RE=/@(1H|2H)$/;
-const isCC=p=>/^E?[HA]?[KC][OU][\d.]+$/.test(p);
-const isEach=p0=>/^E[KC][OU]/.test(p0.replace(SCOPE_RE,''));
-const isManualOnly=p0=>SCOPE_RE.test(p0)||isCC(p0.replace(SCOPE_RE,''));
-function chk(p,h,a){p=p.replace(SCOPE_RE,'');const g=h+a,d=h-a;let m;
+function chk(p,h,a){const g=h+a,d=h-a;let m;
  if(p=='1')return[d>0,1-d,0];if(p=='2')return[d<0,1+d,0];if(p=='X')return[d==0,Math.abs(d),0];
  if(p=='1X')return[d>=0,-d,0];if(p=='X2')return[d<=0,d,0];if(p=='12')return[d!=0,d?0:1,0];
  if(p=='BY')return[h>0&&a>0,(h==0)+(a==0),'up'];if(p=='BN')return[!(h>0&&a>0),0,'down'];
@@ -30,21 +26,9 @@ function chk(p,h,a){p=p.replace(SCOPE_RE,'');const g=h+a,d=h-a;let m;
  if(m=p.match(/^S(\d+)-(\d+)$/)){const x=+m[1],y=+m[2];return[h==x&&a==y,Math.max(0,x-h)+Math.max(0,y-a),h>x||a>y?'down':0]}
  if(m=p.match(/^AH([12])([+-][\d.]+)$/)){const S=subs(+m[2]),e=s=>(m[1]=='1'?d:-d)+s,oc=comb(S.map(s=>gr(e(s)))),em=Math.min(...S.map(e));
   return[oc=='W',em>0?0:Math.floor(-em)+1,0,oc]}
- if(m=p.match(/^([HA]?)([KC])([OU])([\d.]+)$/)){const v=m[1]=='H'?h:m[1]=='A'?a:g,S=subs(+m[4]),O=m[3]=='O',oc=comb(S.map(l=>gr(O?v-l:l-v)));
-  return[oc=='W',O?Math.floor(Math.max(...S))+1-v:0,O?'up':'down',oc]}
- if(m=p.match(/^E([KC])([OU])([\d.]+)$/)){const S=subs(+m[3]),O=m[2]=='O',side=v=>comb(S.map(l=>gr(O?v-l:l-v))),ocH=side(h),ocA=side(a);
-  const AND=(x,y)=>x=='L'||y=='L'?'L':x=='W'&&y=='W'?'W':x=='P'&&y=='P'?'P':(x=='W'||x=='P')&&(y=='W'||y=='P')?'HW':'HL',oc=AND(ocH,ocA);
-  return[oc=='W',0,O?'up':'down',oc]}
  return[false,9,0]}
-function ev1(p0,x,sv){const sc=SCOPE_RE.test(p0),p=p0.replace(SCOPE_RE,'');
- const mv=sv&&sv[p0];let xx=x;
- if(sc||isCC(p)){
-  if(mv)xx={h:mv.h,a:mv.a||0,w:mv.w||0,st:mv.f?'post':'in',min:mv.m||45,man:1,over:0};
-  else if(!x||!(x.man||x.fin))return['n',0];
- }
- if(!xx)return['n',0];
- const Q=p[0]=='Q',fin=xx.st=='post'||(xx.over&&!Q);
- const r=Q?(xx.st=='post'&&xx.w?[xx.w==(p=='Q1'?1:2),1,0]:chk(p=='Q1'?'1':'2',xx.h,xx.a)):chk(p,xx.h,xx.a),ok=r[0],need=r[1],mono=r[2],oc=r[3],rec=need<=1||need*25<=90-(xx.min||0);
+function ev1(p,x){const Q=p[0]=='Q',fin=x.st=='post'||(x.over&&!Q);
+ const r=Q?(x.st=='post'&&x.w?[x.w==(p=='Q1'?1:2),1,0]:chk(p=='Q1'?'1':'2',x.h,x.a)):chk(p,x.h,x.a),ok=r[0],need=r[1],mono=r[2],oc=r[3],rec=need<=1||need*25<=90-(x.min||0);
  if(oc){
   if(fin)return oc=='L'?['r',1]:['g',0];
   if(mono=='up')return oc=='W'?['g',0]:oc=='L'?[rec?'o':'r',0]:oc=='HW'?['b',0]:['o',0];
@@ -54,28 +38,25 @@ function ev1(p0,x,sv){const sc=SCOPE_RE.test(p0),p=p0.replace(SCOPE_RE,'');
  if(mono=='up'&&ok)return['g',0];if(mono=='down'&&!ok)return['r',1];
  if(ok)return['b',0];
  return[rec?'o':'r',0]}
-function ev(p,x,sv){
- const subs2=p.split('&'),hasMv=sv&&subs2.some(q=>sv[q]);
- if(!hasMv&&(!x||x.st=='pre'))return['n',0];
- const R=subs2.map(q=>ev1(q,x,sv)),C=R.map(r=>r[0]);
+function ev(p,x){
+ if(!x||x.st=='pre')return['n',0];
+ const R=p.split('&').map(q=>ev1(q,x)),C=R.map(r=>r[0]);
  if(R.some(r=>r[1]))return['r',1];
  if(C.every(c=>c=='g'))return['g',0];
  if(C.every(c=>c=='g'||c=='b'))return['b',0];
  return[C.includes('r')?'r':'o',0]}
-const pt1=(p0,l)=>{let m;const sc=SCOPE_RE.test(p0)?(p0.endsWith('1H')?' (نیمهٔ اول)':' (نیمهٔ دوم)'):'',p=p0.replace(SCOPE_RE,'');const H=l.home,A=l.away,F={1:'برد '+H,2:'برد '+A,X:'مساوی','1X':H+' یا مساوی',X2:'مساوی یا '+A,12:'بدون مساوی',BY:'هر دو تیم گل می‌زنند',BN:'حداقل یک تیم گل نمی‌زند',Q1:'صعود '+H+' (کل بازی)',Q2:'صعود '+A+' (کل بازی)'};
- if(F[p])return F[p]+sc;
- if(m=p.match(/^([HA]?)([OU])([\d.]+)$/))return(m[1]=='H'?'گل‌های '+H+' ':m[1]=='A'?'گل‌های '+A+' ':'مجموع گل ')+(m[2]=='O'?'بالای ':'زیر ')+m[3]+sc;
- if(m=p.match(/^([HA]?)([KC])([OU])([\d.]+)$/))return(m[2]=='K'?(m[1]=='H'?'کارت‌های '+H+' ':m[1]=='A'?'کارت‌های '+A+' ':'مجموع کارت '):(m[1]=='H'?'کرنرهای '+H+' ':m[1]=='A'?'کرنرهای '+A+' ':'مجموع کرنر '))+(m[3]=='O'?'بالای ':'زیر ')+m[4]+sc;
- if(m=p.match(/^E([KC])([OU])([\d.]+)$/))return'هر دو تیم '+(m[1]=='K'?'کارت ':'کرنر ')+(m[2]=='O'?'بالای ':'زیر ')+m[3]+sc;
+const pt1=(p,l)=>{let m;const H=l.home,A=l.away,F={1:'برد '+H,2:'برد '+A,X:'مساوی','1X':H+' یا مساوی',X2:'مساوی یا '+A,12:'بدون مساوی',BY:'هر دو تیم گل می‌زنند',BN:'حداقل یک تیم گل نمی‌زند',Q1:'صعود '+H+' (کل بازی)',Q2:'صعود '+A+' (کل بازی)'};
+ if(F[p])return F[p];
+ if(m=p.match(/^([HA]?)([OU])([\d.]+)$/))return(m[1]=='H'?'گل‌های '+H+' ':m[1]=='A'?'گل‌های '+A+' ':'مجموع گل ')+(m[2]=='O'?'بالای ':'زیر ')+m[3];
  if(m=p.match(/^T(\d+)$/))return'دقیقاً '+m[1]+' گل';
  if(m=p.match(/^S(\d+)-(\d+)$/))return'نتیجهٔ دقیق '+m[1]+'-'+m[2];
- if(m=p.match(/^AH([12])(.+)$/))return'هندیکپ '+(m[1]==1?H:A)+' ('+m[2]+')';return p+sc};
+ if(m=p.match(/^AH([12])(.+)$/))return'هندیکپ '+(m[1]==1?H:A)+' ('+m[2]+')';return p};
 const pickTxt=(p,l)=>p.split('&').map(q=>pt1(q,l)).join(' + ');
 
 
 const OCL={HW:'نیم‌برد',P:'بازگشت وجه',HL:'نیم‌باخت'};
-const lbl=(p,x)=>{if(!x||p.includes('&')||p[0]=='Q'||isManualOnly(p)||!(x.st=='post'||x.over))return'';const o=chk(p,x.h,x.a)[3];return OCL[o]?' · '+OCL[o]:''};
-const fac=(l,x)=>{if(!x||l.pick.includes('&')||l.pick[0]=='Q'||isManualOnly(l.pick)||!(x.st=='post'||x.over))return 1;const o=chk(l.pick,x.h,x.a)[3],O=+l.odds;return o=='HW'?(O+1)/2/O:o=='P'?1/O:o=='HL'?.5/O:1};
+const lbl=(p,x)=>{if(!x||p.includes('&')||p[0]=='Q'||!(x.st=='post'||x.over))return'';const o=chk(p,x.h,x.a)[3];return OCL[o]?' · '+OCL[o]:''};
+const fac=(l,x)=>{if(!x||l.pick.includes('&')||l.pick[0]=='Q'||!(x.st=='post'||x.over))return 1;const o=chk(l.pick,x.h,x.a)[3],O=+l.odds;return o=='HW'?(O+1)/2/O:o=='P'?1/O:o=='HL'?.5/O:1};
 
 const SN = { espn: 'ESPN', sofa: 'Sofascore', fd: 'football-data', apif: 'API-Football', tsdb: 'TheSportsDB' };
 const gk = (l) => fold(l.home) + '|' + fold(l.away);
@@ -83,7 +64,7 @@ const gk = (l) => fold(l.home) + '|' + fold(l.away);
 function cons(l, LV, now) {
   now = now || Date.now();
   if (l.ov) return { h: l.ov.h, a: l.ov.a, w: l.ov.w, st: l.ov.f ? 'post' : 'in', min: l.ov.m || 45, man: 1, clk: l.ov.f ? 'پایان (دستی)' : 'زنده (دستی)' };
-  if (l.fin && !(l.fin.t && new Date(l.fin.t) > now)) return { h: l.fin.h, a: l.fin.a, w: l.fin.w, st: 'post', t: l.fin.t ? new Date(l.fin.t) : null, clk: 'پایان', fin: 1, lg: l.fin.lg || l.lg, co: l.fin.co || l.co };
+  if (l.fin && !(l.fin.t && new Date(l.fin.t) > now)) return { h: l.fin.h, a: l.fin.a, w: l.fin.w, st: 'post', t: l.fin.t ? new Date(l.fin.t) : null, clk: 'پایان', fin: 1, lg: l.fin.lg || l.lg };
   const H0 = (LV || []).filter((e) => mt(l, e));
   if (!H0.length) return null;
   const bs = {};
@@ -92,19 +73,19 @@ function cons(l, LV, now) {
   H.forEach((e) => (g[e.h + '-' + e.a] = g[e.h + '-' + e.a] || []).push(e));
   const G = Object.values(g).sort((a, b) => b.length - a.length || a[0].p - b[0].p), r = G[0][0];
   const fut = r.st == 'post' && r.t && new Date(r.t) > now + 6e4;
-  return { h: r.h, a: r.a, st: fut ? 'pre' : r.st, clk: r.pp ? 'تعویق/لغو' : r.clk, min: r.min, t: r.t ? new Date(r.t) : null, over: r.over, w: r.w, aet: r.aet, pp: r.pp, lg: r.lg || (H.find((e) => e.lg) || {}).lg || l.lg, co: r.co || (H.find((e) => e.co) || {}).co || l.co, goals: r.goals, ref: r.home + ' – ' + r.away,
+  return { h: r.h, a: r.a, st: fut ? 'pre' : r.st, clk: r.pp ? 'تعویق/لغو' : r.clk, min: r.min, t: r.t ? new Date(r.t) : null, over: r.over, w: r.w, aet: r.aet, pp: r.pp, lg: r.lg || (H.find((e) => e.lg) || {}).lg || l.lg, goals: r.goals, ref: r.home + ' – ' + r.away,
     src: G.map((q) => [[...new Set(q.map((e) => SN[e.s] || e.s))].join('+'), q[0].h + '-' + q[0].a]), cf: G.length > 1 };
 }
 // وضعیت کامل یک بلیت (هم در سایت و هم در سرور/ربات یکسان)
 function betState(b, LV, now) {
   now = now || Date.now();
-  const L = b.legs.map((l) => { const x = cons(l, LV, now), r = ev(l.pick, x, l.sv); return { l, x, c: r[0], d: r[1], fin: !!(x && (x.st == 'post' || x.over)) }; });
+  const L = b.legs.map((l) => { const x = cons(l, LV, now), r = ev(l.pick, x); return { l, x, c: r[0], d: r[1], fin: !!(x && (x.st == 'post' || x.over)) }; });
   const cnt = { g: 0, b: 0, o: 0, r: 0, n: 0 };
   let dead = 0, all = 1, wr = 0, near = 0, live = 0, wl = 0, pr = 1, fa = 1, s = 0, finLoss = 0;
   L.forEach((z) => {
     cnt[z.c]++;
     if (z.d) { dead = 1; if (z.fin) finLoss = 1; }
-    if (z.c != 'g') { all = 0; if (z.l.odds) pr /= z.l.odds; }
+    if (z.c != 'g') { all = 0; pr /= z.l.odds; }
     const el = z.x && z.x.st == 'in' ? Math.min(1, (z.x.over ? 90 : z.x.min || 45) / 90) : 0;
     if (z.c == 'r' && !z.d) { wr++; wl += el; }
     if (z.c == 'o') near++;
@@ -123,5 +104,5 @@ function summary(recs) {
   return { n: H.length, won: W.length, lost: H.length - W.length, staked: st, ret, profit: ret - st, roi: st ? (ret - st) / st : 0, score: H.reduce((s, b) => s + pts(b), 0) };
 }
 
-return { fold, same, mt, chk, ev, pt1, pickTxt, lbl, fac, OCL, SN, gk, cons, betState, pts, settled, summary, isManualOnly, isEach };
+return { fold, same, mt, chk, ev, pt1, pickTxt, lbl, fac, OCL, SN, gk, cons, betState, pts, settled, summary };
 });

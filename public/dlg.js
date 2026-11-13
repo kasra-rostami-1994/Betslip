@@ -11,7 +11,7 @@ function mountDialogs() {
   <div id="mf" class="row" hidden><input id="sk" inputmode="decimal" placeholder="مبلغ (USDT)"><input id="od" inputmode="decimal" placeholder="ضریب کل (خالی = حاصل‌ضرب)"><input id="ch" inputmode="decimal" placeholder="کش‌اوت"></div>
   <div id="ff" hidden><div class="row"><input id="fh" placeholder="تیم میزبان"><input id="fa" placeholder="تیم میهمان"><input id="fo" inputmode="decimal" placeholder="ضریب"></div><div class="row"><select id="fc"></select><input id="fv" placeholder="مقدار"><button type="button" class="btn" id="fadd">+ شرط</button></div><div class="mut sm" id="fcur"></div><button type="button" class="btn" id="fleg">افزودن این بازی به بلیت</button><div class="sm" id="flist"></div></div>
   <textarea id="tx" rows="11"></textarea><div class="sm mut" id="hint"></div><div class="row"><button type="button" class="btn p" id="ok">ثبت بلیت</button><button type="button" class="btn" id="cl">بستن</button></div></form></dialog>
-  <dialog id="ov"><form onsubmit="return false"><h3 id="ovt"></h3><div id="ovplain"><div class="row"><input id="oh" inputmode="numeric" placeholder="گل میزبان"><input id="oa" inputmode="numeric" placeholder="گل میهمان"><input id="om" inputmode="numeric" placeholder="دقیقه (اختیاری)"></div><select id="os"><option value="live">در حال انجام</option><option value="fin">پایان‌یافته (نتیجهٔ 90 دقیقه)</option></select><select id="ow" hidden><option value="0">برندهٔ نهایی (برای شرط صعود)</option><option value="1">میزبان صعود کرد</option><option value="2">میهمان صعود کرد</option></select></div><div id="ovsv" hidden></div><div class="sm mut" id="ovsvh" hidden>برای هر بازار، مقدار فعلی/نهایی را وارد کنید و اگر آن بازار تمام شده «نهایی» را بزنید.</div><div class="sm" style="color:var(--o)" id="ovh"></div><div class="row"><button type="button" class="btn p" id="ovs">ذخیره</button><button type="button" class="btn" id="ovc">حذف نتیجهٔ دستی</button><button type="button" class="btn" id="ovr">بازنشانی نتیجهٔ ذخیره‌شده</button><button type="button" class="lnk" id="ovx">بستن</button></div></form></dialog>
+  <dialog id="ov"><form onsubmit="return false"><h3 id="ovt"></h3><div class="row"><input id="oh" inputmode="numeric" placeholder="گل میزبان"><input id="oa" inputmode="numeric" placeholder="گل میهمان"><input id="om" inputmode="numeric" placeholder="دقیقه (اختیاری)"></div><select id="os"><option value="live">در حال انجام</option><option value="fin">پایان‌یافته (نتیجهٔ 90 دقیقه)</option></select><select id="ow" hidden><option value="0">برندهٔ نهایی (برای شرط صعود)</option><option value="1">میزبان صعود کرد</option><option value="2">میهمان صعود کرد</option></select><div class="sm" style="color:var(--o)" id="ovh"></div><div class="row"><button type="button" class="btn p" id="ovs">ذخیره</button><button type="button" class="btn" id="ovc">حذف نتیجهٔ دستی</button><button type="button" class="btn" id="ovr">بازنشانی نتیجهٔ ذخیره‌شده</button><button type="button" class="lnk" id="ovx">بستن</button></div></form></dialog>
   <dialog id="co"><form onsubmit="return false"><h3 id="cot"></h3><input id="cov" inputmode="decimal" placeholder="پیشنهاد کش‌اوت سایت (USDT)"><div id="cor" class="sm" style="line-height:2"></div><button type="button" class="btn" id="cox">بستن</button></form></dialog>
   <dialog id="mp"><form onsubmit="return false"><h3 id="mt"></h3><div class="sm mut">بازی را از نتایج منابع انتخاب کنید تا برای همهٔ بلیت‌ها یادش بماند.</div><input id="mq" placeholder="جستجوی اسم تیم در منابع"><div id="ml"></div><button type="button" class="btn" id="mc">بستن</button></form></dialog>
   <dialog id="sg"><form onsubmit="return false"><h3>اعلان و ربات تلگرام</h3><div class="sm mut">توکن را از BotFather و Chat ID را از getUpdates بگیرید. زمان‌بند (cron) باید /api/notify را هر 1 تا 5 دقیقه صدا بزند (راهنما در README).</div><input id="tt" type="password" placeholder="توکن ربات"><input id="tc" placeholder="Chat ID">
@@ -58,8 +58,7 @@ function edSave() {
   let Rs;
   if (ED.m == 'f') { if (!ED.DL.length) return H('حداقل یک بازی به بلیت اضافه کنید.'); Rs = [mkBet(ED.DL)]; }
   else if (ED.m == 'm') { Rs = [parseManual($('#tx').value, { name: $('#nm').value.trim(), stake: $('#sk').value, odds: $('#od').value })]; if (Rs[0]) Rs[0].cash = $('#ch').value ? num($('#ch').value) : null; }
-  else { const BB=/\(\s*(90\s*mins?|1st\s*half|first\s*half|2nd\s*half|second\s*half)\s*\)/i;
-   Rs = $('#tx').value.split(/^\s*Active\s*$/mi).map((chunk) => (BB.test(chunk) ? parseBuilder(chunk) : parseBlock(chunk))); }
+  else Rs = $('#tx').value.split(/^\s*Active\s*$/mi).map(parseBlock);
   const ok = Rs.filter(Boolean); if (!ok.length) return H('هیچ بازی‌ای تشخیص داده نشد؛ قالب را بررسی کنید.');
   const wn = ok.map((b) => b._w).filter(Boolean); if (wn.length && !confirm('⚠ ' + wn.join('\n') + '\n\nبا همین حالت ثبت شود؟')) return;
   const nm = $('#nm').value.trim(), now = Date.now();
@@ -68,26 +67,7 @@ function edSave() {
 }
 /* ---- نتیجهٔ دستی، کش‌اوت، تطبیق بازی ---- */
 let OV = null;
-function openOv(b, i) {
-  const l = b.legs[i]; OV = { l, b };
-  $('#ovt').textContent = l.home + ' – ' + l.away; $('#ovh').textContent = '';
-  const subs = l.pick.split('&'), manual = subs.filter((p) => Core.isManualOnly(p));
-  OV.subs = manual;
-  if (manual.length) {
-    $('#ovplain').hidden = true; $('#ovsv').hidden = false; $('#ovsvh').hidden = false;
-    $('#ovsv').innerHTML = manual.map((p, idx) => { const each = Core.isEach(p), mv = (l.sv || {})[p] || {};
-      return `<div class="row" style="align-items:center"><span class="sm" style="flex:2">${esc(Core.pickTxt(p, l))}</span>
-        <input data-sv="${idx}" data-f="h" inputmode="numeric" placeholder="${each ? 'میزبان' : 'مقدار'}" value="${mv.h ?? ''}">
-        ${each ? `<input data-sv="${idx}" data-f="a" inputmode="numeric" placeholder="میهمان" value="${mv.a ?? ''}">` : ''}
-        <label class="sm"><input type="checkbox" data-sv="${idx}" data-f="f"${mv.f ? ' checked' : ''}> نهایی</label></div>`; }).join('');
-  } else {
-    $('#ovplain').hidden = false; $('#ovsv').hidden = true; $('#ovsvh').hidden = true; $('#ovsv').innerHTML = '';
-    const o = l.ov || l.fin;
-    $('#oh').value = o ? o.h : ''; $('#oa').value = o ? o.a : ''; $('#om').value = (l.ov && l.ov.m) || '';
-    $('#os').value = (l.ov && l.ov.f) || (!l.ov && l.fin) ? 'fin' : 'live'; $('#ow').hidden = !l.pick.includes('Q'); $('#ow').value = (o && o.w) || 0;
-  }
-  $('#ov').showModal();
-}
+function openOv(b, i) { const l = b.legs[i], o = l.ov || l.fin; OV = { l }; $('#ovt').textContent = l.home + ' – ' + l.away; $('#ovh').textContent = ''; $('#oh').value = o ? o.h : ''; $('#oa').value = o ? o.a : ''; $('#om').value = (l.ov && l.ov.m) || ''; $('#os').value = (l.ov && l.ov.f) || (!l.ov && l.fin) ? 'fin' : 'live'; $('#ow').hidden = !l.pick.includes('Q'); $('#ow').value = (o && o.w) || 0; $('#ov').showModal(); }
 let CO = null;
 function openCo(b) { CO = b; $('#cot').textContent = 'ماشین‌حساب کش‌اوت · ' + b.name; $('#cov').value = b.cash == null ? '' : b.cash; coCalc(); $('#co').showModal(); }
 function coCalc() {
@@ -138,19 +118,12 @@ function bindDialogs() {
   $('#flist').addEventListener('click', (e) => { const a = e.target.closest('[data-r],[data-e]'); if (!a) return; e.preventDefault(); if (a.dataset.r != null) ED.DL.splice(+a.dataset.r, 1); else { const l = ED.DL.splice(+a.dataset.e, 1)[0]; ED.EL = l; $('#fh').value = l.home; $('#fa').value = l.away; $('#fo').value = l.odds; ED.CUR = l.pick.split('&'); } flist(); });
   $('#ok').onclick = edSave; $('#cl').onclick = () => $('#ad').close(); $('#ad').addEventListener('close', () => { ED.edit = null; });
   $('#ovs').onclick = () => {
-    const l = OV.l;
-    if (OV.subs && OV.subs.length) {
-      l.sv = l.sv || {};
-      for (const idx in OV.subs) { const p = OV.subs[idx], he = document.querySelector(`[data-sv="${idx}"][data-f="h"]`), ae = document.querySelector(`[data-sv="${idx}"][data-f="a"]`), fe = document.querySelector(`[data-sv="${idx}"][data-f="f"]`);
-        const h = parseInt(he.value); if (!(h >= 0)) continue; l.sv[p] = { h, a: ae ? parseInt(ae.value) || 0 : 0, f: fe.checked ? 1 : 0, m: (l.sv[p] && l.sv[p].m) || 45 }; }
-      $('#ov').close(); save(); render(); return;
-    }
-    const h = parseInt($('#oh').value), a = parseInt($('#oa').value); if (!(h >= 0 && a >= 0)) { $('#ovh').textContent = 'گل هر دو تیم را وارد کنید.'; return; }
+    const l = OV.l, h = parseInt($('#oh').value), a = parseInt($('#oa').value); if (!(h >= 0 && a >= 0)) { $('#ovh').textContent = 'گل هر دو تیم را وارد کنید.'; return; }
     const w = +$('#ow').value || 0;
-    if ($('#os').value == 'fin') { l.ov = { h, a, f: 1, w }; l.fin = { h, a, w, t: null, lg: l.lg || '', co: l.co || '' }; } else { l.ov = { h, a, f: 0, m: parseInt($('#om').value) || 0 }; delete l.fin; }
+    if ($('#os').value == 'fin') { l.ov = { h, a, f: 1, w }; l.fin = { h, a, w, t: null, lg: l.lg || '' }; } else { l.ov = { h, a, f: 0, m: parseInt($('#om').value) || 0 }; delete l.fin; }
     $('#ov').close(); save(); render();
   };
-  $('#ovc').onclick = () => { if (OV.subs && OV.subs.length) delete OV.l.sv; else delete OV.l.ov; $('#ov').close(); save(); render(); }; $('#ovr').onclick = () => { if (OV.subs && OV.subs.length) delete OV.l.sv; else { delete OV.l.ov; delete OV.l.fin; } $('#ov').close(); save(); render(); }; $('#ovx').onclick = () => $('#ov').close();
+  $('#ovc').onclick = () => { delete OV.l.ov; $('#ov').close(); save(); render(); }; $('#ovr').onclick = () => { delete OV.l.ov; delete OV.l.fin; $('#ov').close(); save(); render(); }; $('#ovx').onclick = () => $('#ov').close();
   $('#cov').oninput = coCalc; $('#cox').onclick = () => $('#co').close();
   $('#mq').oninput = mlist; $('#mc').onclick = () => $('#mp').close();
   $('#ml').onclick = (e) => { const b = e.target.closest('[data-i]'); if (!b) return; const E = MP.R[b.dataset.i]; S.bets.forEach((x) => x.legs.forEach((l) => { if (l.home == MP.l.home && l.away == MP.l.away) l.map = { h: E.home, a: E.away }; })); save(); $('#mp').close(); render(); };

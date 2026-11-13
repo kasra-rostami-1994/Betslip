@@ -18,9 +18,8 @@ function compute() {
     if (b.arch || !S.tok) continue;
     s.L.forEach((z) => {
       const x = z.x, l = z.l;
-      if (x && x.st == 'post' && !x.man && !x.fin && !l.fin && !l.ov && x.t && x.t < now) { l.fin = { h: x.h, a: x.a, w: x.w || 0, t: x.t.toISOString(), lg: x.lg || '', co: x.co || '' }; ch = 1; }
+      if (x && x.st == 'post' && !x.man && !x.fin && !l.fin && !l.ov && x.t && x.t < now) { l.fin = { h: x.h, a: x.a, w: x.w || 0, t: x.t.toISOString(), lg: x.lg || '' }; ch = 1; }
       if (x && x.lg && !l.lg) { l.lg = x.lg; ch = 1; }
-      if (x && x.co && !l.co) { l.co = x.co; ch = 1; }
     });
     if (s.finLoss && !b.keep) { b.arch = now; b.sett = now; b.res = 'lost'; b.auto = 1; ch = 1; R.auto++; }
   }
@@ -34,8 +33,7 @@ function legRow(z, b, mode, i) {
   const bd = x && x.man ? '<small>منبع: دستی</small>' : x && x.fin ? '<small>منبع: ذخیره‌شده</small>' : x && x.src ? (x.cf ? '<small class="w">⚠ اختلاف: ' + x.src.map((q) => esc(q[0]) + ' ' + q[1]).join(' | ') + '</small>' : `<small class="${nm.includes('+') ? 'v' : ''}">${nm.includes('+') ? '✓ ' : ''}${esc(nm)}</small>`) : '';
   const lk = pub ? '' : !x && S.at && !l.ov && !l.fin ? `<a href="#" data-a="map" data-id="${b.id}" data-l="${i}">انتخاب دستی بازی</a>` : x && x.man && x.st == 'in' ? `<a href="#" data-a="ov" data-id="${b.id}" data-l="${i}">ثبت نتیجهٔ نهایی</a>` : '';
   const g = x && x.goals && x.goals.length ? `<div class="gl">${x.goals.map((q) => '⚽ ' + esc(q.m) + ' ' + esc(q.n) + (q.f ? ' (' + q.f + ')' : '')).join(' · ')}</div>` : '';
-  const co = l.co || (x && x.co), lgn = l.lg || (x && x.lg), lc = lgn ? `<div class="lgc">${esc(lgn)}${co ? ' · ' + esc(co) : ''}</div>` : '';
-  return `<div class="leg${U.fil && U.fil.g == Core.gk(l) ? ' hl' : ''}"><i class="mk c-${z.c}${live ? ' live' : ''}"></i><div><div class="t">${esc(l.home)} – ${esc(l.away)}</div>${lc}<div class="s">${esc(Core.pickTxt(l.pick, l))}${l.odds ? ' · ' + (+l.odds).toFixed(2) : ''}${Core.lbl(l.pick, x)}</div>${g}</div>
+  return `<div class="leg${U.fil && U.fil.g == Core.gk(l) ? ' hl' : ''}"><i class="mk c-${z.c}${live ? ' live' : ''}"></i><div><div class="t">${esc(l.home)} – ${esc(l.away)}</div><div class="s">${esc(Core.pickTxt(l.pick, l))} · ${(+l.odds).toFixed(2)}${Core.lbl(l.pick, x)}</div>${g}</div>
   <div class="sc"${pub ? '' : ` data-a="ov" data-id="${b.id}" data-l="${i}" tabindex="0" role="button" title="${esc(x && x.ref ? 'تطبیق با: ' + x.ref + ' (کلیک = ورود دستی نتیجه)' : 'ورود دستی نتیجه')}"`}>${sc}${bd}${lk}</div></div>`;
 }
 function betRow(b, s, mode) {
@@ -59,26 +57,26 @@ const matchQ = (b, q) => { q = q.trim().toLowerCase(); return !q || (b.name + ' 
 const filt = (a) => a.filter((b) => matchQ(b, U.q)).filter((b) => !U.tag || (b.tags || []).includes(U.tag)).filter((b) => !U.fil || (U.fil.g ? b.legs.some((l) => Core.gk(l) == U.fil.g) : b.id == U.fil.b));
 const SORTS = { risk: (a, b) => R.st.get(b.id).risk - R.st.get(a.id).risk || b.win - a.win, new: (a, b) => b.created - a.created, old: (a, b) => a.created - b.created, odds: (a, b) => b.odds - a.odds, win: (a, b) => b.win - a.win };
 const tagOpts = () => { const T = [...new Set(S.bets.flatMap((b) => b.tags || []))].sort(); if (U.tag && !T.includes(U.tag)) U.tag = ''; return T.length ? `<select data-a="tag"><option value="">همهٔ برچسب‌ها</option>${T.map((t) => `<option${t == U.tag ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select>` : ''; };
-const toolbar = (hist) => `<div class="bar"><input data-a="q" placeholder="${t('search')}" value="${esc(U.q)}" style="flex:1;min-width:160px">${hist ? `<select data-a="hres">${[['', t('allResults')], ['won', t('won')], ['lost', t('lost')]].map(([k, v]) => `<option value="${k}"${U.hres == k ? ' selected' : ''}>${v}</option>`).join('')}</select><select data-a="hrange">${[['all', t('allTime')], ['7', t('days7')], ['30', t('days30')], ['90', t('days90')]].map(([k, v]) => `<option value="${k}"${U.hrange == k ? ' selected' : ''}>${v}</option>`).join('')}</select>` : `<select data-a="sort">${[['risk', t('sortRisk')], ['new', t('sortNew')], ['old', t('sortOld')], ['odds', t('sortOdds')], ['win', t('sortWin')]].map(([k, v]) => `<option value="${k}"${U.sort == k ? ' selected' : ''}>${v}</option>`).join('')}</select>`}${tagOpts()}<button class="btn" data-a="sel">${U.sel ? t('done') : t('selectBulk')}</button></div>`;
+const toolbar = (hist) => `<div class="bar"><input data-a="q" placeholder="جستجو: نام بلیت، تیم، برچسب…" value="${esc(U.q)}" style="flex:1;min-width:160px">${hist ? `<select data-a="hres">${[['', 'همه نتایج'], ['won', 'برنده‌ها'], ['lost', 'بازنده‌ها']].map(([k, v]) => `<option value="${k}"${U.hres == k ? ' selected' : ''}>${v}</option>`).join('')}</select><select data-a="hrange">${[['all', 'همهٔ زمان‌ها'], ['7', '7 روز'], ['30', '30 روز'], ['90', '90 روز']].map(([k, v]) => `<option value="${k}"${U.hrange == k ? ' selected' : ''}>${v}</option>`).join('')}</select>` : `<select data-a="sort">${[['risk', 'بیشترین ریسک'], ['new', 'جدیدترین'], ['old', 'قدیمی‌ترین'], ['odds', 'بیشترین ضریب'], ['win', 'بیشترین برد']].map(([k, v]) => `<option value="${k}"${U.sort == k ? ' selected' : ''}>${v}</option>`).join('')}</select>`}${tagOpts()}<button class="btn" data-a="sel">${U.sel ? 'پایان انتخاب' : 'انتخاب گروهی'}</button></div>`;
 const filBar = () => (U.fil ? `<div class="fil"><span>فیلتر: <b>${esc(U.fil.n)}</b></span><button class="lnk" data-a="nf">حذف فیلتر</button></div>` : '');
 /* ---- بلیت‌های فعال ---- */
 function vBets() {
   const act = S.bets.filter((b) => !b.arch), sts = act.map((b) => R.st.get(b.id)), C = {}, G = new Map();
   sts.forEach((s) => { C[s.cls] = (C[s.cls] || 0) + 1; s.L.forEach((z) => G.set(Core.gk(z.l), z.x)); });
   const live = [...G.values()].filter((x) => x && x.st == 'in').length, ok = sts.filter((s) => !s.lost);
-  return `<div class="strip">${kp(act.length, t('activeBetsK'))}${kp(live, t('liveGamesK'))}${kp(nf(ok.reduce((s, x) => s + +x.b.stake, 0)), t('inPlayStakeK'))}${kp(nf(ok.reduce((s, x) => s + x.b.win * x.fa, 0)), t('potentialWinK'))}</div>
+  return `<div class="strip">${kp(act.length, 'بلیت فعال')}${kp(live, 'بازی زنده')}${kp(nf(ok.reduce((s, x) => s + +x.b.stake, 0)), 'شرطِ در جریان')}${kp(nf(ok.reduce((s, x) => s + x.b.win * x.fa, 0)), 'برد در صورت موفقیت همه')}</div>
   <div class="bar">${['wr', 'near', 'ok', 'wait', 'won', 'lost'].filter((k) => C[k]).map((k) => `<button class="pill${U.cls == k ? ' on' : ''}" data-a="cls" data-v="${k}"><i class="mk c-${CLR[k]}"></i>${CLN[k]} <em>${C[k]}</em></button>`).join('')}</div>${toolbar(0)}<div id="list">${listBets()}</div>`;
 }
 function listBets() {
   const a = filt(S.bets.filter((b) => !b.arch)).filter((b) => !U.cls || R.st.get(b.id).cls == U.cls).sort(SORTS[U.sort] || SORTS.risk);
-  return filBar() + (a.length ? a.map((b) => betRow(b, R.st.get(b.id), 'act')).join('') : `<div class="empty">${S.bets.some((b) => !b.arch) ? t('emptyFiltered') : t('emptyActive') + `<br><br><button class="btn p" data-a="add">${t('addBet')}</button>`}</div>`);
+  return filBar() + (a.length ? a.map((b) => betRow(b, R.st.get(b.id), 'act')).join('') : `<div class="empty">${S.bets.some((b) => !b.arch) ? 'بلیتی با این فیلتر نیست.' : 'هنوز بلیت فعالی ندارید.<br><br><button class="btn p" data-a="add">+ افزودن بلیت</button>'}</div>`);
 }
 /* ---- تاریخچه ---- */
 function listHist() {
   const lim = U.hrange == 'all' ? 0 : Date.now() - +U.hrange * 864e5;
   const a = filt(S.bets.filter((b) => b.arch)).filter((b) => !U.hres || b.res == U.hres).filter((b) => (b.sett || b.arch) >= lim).sort((p, q) => (q.sett || q.arch) - (p.sett || p.arch));
   const sm = Core.summary(a);
-  return `<div class="strip">${kp(a.length, 'بلیت')}${kp(sm.won, 'برنده', 'var(--g)')}${kp(sm.lost, 'بازنده', 'var(--r)')}${kp(sgn(sm.profit), 'سود/زیان (USDT)', clrP(sm.profit))}</div>` + filBar() + (a.length ? a.map((b) => betRow(b, R.st.get(b.id), 'hist')).join('') : `<div class="empty">${t('emptyHist')}</div>`);
+  return `<div class="strip">${kp(a.length, 'بلیت')}${kp(sm.won, 'برنده', 'var(--g)')}${kp(sm.lost, 'بازنده', 'var(--r)')}${kp(sgn(sm.profit), 'سود/زیان (USDT)', clrP(sm.profit))}</div>` + filBar() + (a.length ? a.map((b) => betRow(b, R.st.get(b.id), 'hist')).join('') : '<div class="empty">بلیتی در بایگانی نیست.</div>');
 }
 const vHist = () => toolbar(1) + `<div id="list">${listHist()}</div>`;
 /* ---- ریسک مشترک ---- */
@@ -89,14 +87,14 @@ function vRisk() {
   S.bets.filter((b) => !b.arch).forEach((b) => { const s = R.st.get(b.id); if (s.lost) return; s.L.forEach((z) => { const k = Core.gk(z.l); if (!G.has(k)) G.set(k, { l: z.l, x: z.x, k, rows: [] }); G.get(k).rows.push({ b, z }); }); });
   const A = [...G.values()].map((g) => { const rs = g.rows, t = rs.some((r) => r.z.c == 'r') ? 5 : rs.some((r) => r.z.c == 'o') ? 4 : rs.some((r) => r.z.c == 'n') ? 3 : rs.some((r) => r.z.c == 'b') ? 2 : 1, op = rs.filter((r) => r.z.c != 'g'), x = g.x; return { g, x, t, ns: !x || x.st == 'pre' ? 1 : 0, n: op.length, pot: op.reduce((s, r) => s + (+r.b.win || 0), 0), el: x && x.st == 'in' ? (x.over ? 90 : x.min || 45) : 0, ko: x && x.t ? x.t - now : 9e15 }; })
     .sort((p, q) => p.ns - q.ns || (p.ns ? p.ko - q.ko || q.pot - p.pot : q.t - p.t || q.pot - p.pot || q.el - p.el));
-  if (!A.length) return `<div class="empty">${t('emptyRisk')}</div>`;
-  return `<div class="strip">${kp(A.filter((a) => a.t == 5).length, 'بازیِ بحرانی')}${kp(A.filter((a) => a.t == 4).length, 'نزدیک')}${kp(A.filter((a) => !a.ns).length, 'بازیِ شروع‌شده')}${kp(A.filter((a) => a.ns).length, 'شروع‌نشده')}</div>` + A.map((a) => { const c = TL[a.t], co = a.g.l.co || (a.x && a.x.co), lgn = a.g.l.lg || (a.x && a.x.lg); return `<article class="bet" style="--c:var(--${c[1]})"><div class="bh" data-a="fg" data-v="${esc(a.g.k)}" data-n="${esc(a.g.l.home + ' – ' + a.g.l.away)}" title="نمایش بلیت‌های شامل این بازی"><div><h3 class="ltr">${esc(a.g.l.home)} – ${esc(a.g.l.away)}${a.x ? ` <span style="color:var(--${c[1]})">(${lvTxt(a.x)})</span>` : ''}</h3>${lgn ? `<div class="lgc">${esc(lgn)}${co ? ' · ' + esc(co) : ''}</div>` : ''}</div><span class="tag c" style="--c:var(--${c[1]})">${c[0]}</span></div>
-    <div class="meta">${a.n} بلیت در معرض خطر · برد احتمالی <b>${nf(a.pot)}</b> USDT</div><div class="legs">${a.g.rows.map((r) => `<div class="leg" data-a="fb" data-v="${r.b.id}" data-n="${esc(r.b.name)}" style="cursor:pointer"><i class="mk c-${r.z.c}"></i><div><div class="t" style="text-align:start;direction:rtl">${esc(r.b.name)} <span class="mut sm">×${nf(r.b.odds)}</span> ${tagsH(r.b)}</div><div class="s">${esc(Core.pickTxt(r.z.l.pick, r.z.l))}${r.z.l.odds ? ' · ' + (+r.z.l.odds).toFixed(2) : ''}${r.b.note ? ' · 📝 ' + esc(r.b.note) : ''}</div></div><span></span></div>`).join('')}</div></article>`; }).join('');
+  if (!A.length) return '<div class="empty">بلیت فعالی نیست.</div>';
+  return `<div class="strip">${kp(A.filter((a) => a.t == 5).length, 'بازیِ بحرانی')}${kp(A.filter((a) => a.t == 4).length, 'نزدیک')}${kp(A.filter((a) => !a.ns).length, 'بازیِ شروع‌شده')}${kp(A.filter((a) => a.ns).length, 'شروع‌نشده')}</div>` + A.map((a) => { const c = TL[a.t]; return `<article class="bet" style="--c:var(--${c[1]})"><div class="bh" data-a="fg" data-v="${esc(a.g.k)}" data-n="${esc(a.g.l.home + ' – ' + a.g.l.away)}" title="نمایش بلیت‌های شامل این بازی"><h3 class="ltr">${esc(a.g.l.home)} – ${esc(a.g.l.away)}${a.x ? ` <span style="color:var(--${c[1]})">(${lvTxt(a.x)})</span>` : ''}</h3><span class="tag c" style="--c:var(--${c[1]})">${c[0]}</span></div>
+    <div class="meta">${a.n} بلیت در معرض خطر · برد احتمالی <b>${nf(a.pot)}</b> USDT</div><div class="legs">${a.g.rows.map((r) => `<div class="leg" data-a="fb" data-v="${r.b.id}" data-n="${esc(r.b.name)}" style="cursor:pointer"><i class="mk c-${r.z.c}"></i><div><div class="t" style="text-align:start;direction:rtl">${esc(r.b.name)} <span class="mut sm">×${nf(r.b.odds)}</span> ${tagsH(r.b)}</div><div class="s">${esc(Core.pickTxt(r.z.l.pick, r.z.l))} · ${(+r.z.l.odds).toFixed(2)}${r.b.note ? ' · 📝 ' + esc(r.b.note) : ''}</div></div><span></span></div>`).join('')}</div></article>`; }).join('');
 }
 /* ---- سطل زباله ---- */
 function vTrash() {
   const T = S.trash.slice().sort((a, b) => b.del - a.del);
-  return `<div class="bar"><h2 style="font-size:22px">سطل زباله</h2><span class="sp"></span>${T.length ? '<button class="btn" data-a="emp">خالی کردن سطل</button>' : ''}</div><div class="mut sm" style="margin-bottom:10px">بلیت‌های حذف‌شده 30 روز نگه داشته می‌شوند.</div>` + (T.length ? T.map((b) => { const d = Math.floor((Date.now() - b.del) / 864e5); return `<article class="bet" style="--c:var(--n)"><div class="bh" style="cursor:default"><h3>${esc(b.name)}</h3><div class="num">×${nf(b.odds)}</div><div class="meta">${b.legs.length} بازی · ${d} روز پیش حذف شد · ${30 - d} روز تا حذف نهایی</div></div><div class="acts"><button class="lnk" data-a="rs" data-id="${b.id}">بازگردانی</button><button class="lnk d" data-a="pd" data-id="${b.id}">حذف دائمی</button></div></article>`; }).join('') : `<div class="empty">${t('emptyTrash')}</div>`);
+  return `<div class="bar"><h2 style="font-size:22px">سطل زباله</h2><span class="sp"></span>${T.length ? '<button class="btn" data-a="emp">خالی کردن سطل</button>' : ''}</div><div class="mut sm" style="margin-bottom:10px">بلیت‌های حذف‌شده 30 روز نگه داشته می‌شوند.</div>` + (T.length ? T.map((b) => { const d = Math.floor((Date.now() - b.del) / 864e5); return `<article class="bet" style="--c:var(--n)"><div class="bh" style="cursor:default"><h3>${esc(b.name)}</h3><div class="num">×${nf(b.odds)}</div><div class="meta">${b.legs.length} بازی · ${d} روز پیش حذف شد · ${30 - d} روز تا حذف نهایی</div></div><div class="acts"><button class="lnk" data-a="rs" data-id="${b.id}">بازگردانی</button><button class="lnk d" data-a="pd" data-id="${b.id}">حذف دائمی</button></div></article>`; }).join('') : '<div class="empty">سطل خالی است.</div>');
 }
 /* ---- رتبه‌بندی و پروفایل‌ها ---- */
 function vBoard() {
@@ -123,16 +121,15 @@ function vShare() {
   return `<div class="mut sm" style="margin-bottom:6px">بلیت اشتراک‌گذاری‌شده از <span class="ltr">@${esc(d.by)}</span></div>` + betRow(d.bet, Core.betState(d.bet, S.LV), 'pub');
 }
 /* ---- پوسته، مسیریابی و رندر ---- */
-const TABS = [['bets', 'bets'], ['risk', 'risk'], ['hist', 'hist'], ['stats', 'stats'], ['board', 'board']];
+const TABS = [['bets', 'بلیت‌ها'], ['risk', 'ریسک'], ['hist', 'تاریخچه'], ['stats', 'آمار'], ['board', 'رتبه‌بندی']];
 function mountShell() {
-  $('#root').innerHTML = `<header><div class="wrap hd"><div class="brand" data-a="go" data-v="bets"><i></i>betslip</div><nav id="nav"></nav><span id="sync" data-s="idle"></span><button class="pill" id="langsw" title="Language / زبان">${LANG === 'en' ? 'FA' : 'EN'}</button><div id="acc"></div></div></header><main class="wrap" id="view"></main><footer id="ver"></footer><div id="menu" class="menu" hidden></div><div id="dlg"></div><div id="toast"></div>`;
+  $('#root').innerHTML = `<header><div class="wrap hd"><div class="brand" data-a="go" data-v="bets"><i></i>betslip</div><nav id="nav"></nav><span id="sync" data-s="idle"></span><div id="acc"></div></div></header><main class="wrap" id="view"></main><footer id="ver"></footer><div id="menu" class="menu" hidden></div><div id="dlg"></div><div id="toast"></div>`;
   $('#ver').textContent = 'Betslip - Update: ' + VER;
-  $('#langsw').onclick = () => setLang(LANG === 'en' ? 'fa' : 'en');
 }
 function renderHead() {
   const guest = !S.tok;
-  $('#nav').innerHTML = (guest ? [['board', 'board']] : TABS).map(([k, v]) => `<a data-a="go" data-v="${k}" class="${U.tab == k ? 'on' : ''}">${t(v)}</a>`).join('');
-  $('#acc').innerHTML = guest ? `<button class="btn p" data-a="login">${t('login')}</button>` : `<div style="display:flex;gap:10px;align-items:center"><button class="btn p" data-a="add">${t('addBet')}</button><button class="av" data-a="menu" aria-label="${t('menu')}">${esc((S.prof && S.prof.name || S.me || '?')[0])}</button></div>`;
+  $('#nav').innerHTML = (guest ? [['board', 'رتبه‌بندی']] : TABS).map(([k, v]) => `<a data-a="go" data-v="${k}" class="${U.tab == k ? 'on' : ''}">${v}</a>`).join('');
+  $('#acc').innerHTML = guest ? '<button class="btn p" data-a="login">ورود</button>' : `<div style="display:flex;gap:10px;align-items:center"><button class="btn p" data-a="add">+ بلیت</button><button class="av" data-a="menu" aria-label="منو">${esc((S.prof && S.prof.name || S.me || '?')[0])}</button></div>`;
 }
 function render() {
   compute(); renderHead(); const v = $('#view'); let h = '';
@@ -141,11 +138,11 @@ function render() {
     case 'trash': h = vTrash(); break; case 'board': h = vBoard(); break; case 'me': h = vMe(); break; case 'u': h = vUser(); break; case 'share': h = vShare(); break;
   }
   v.innerHTML = h; bulk();
-  if (R.auto) toast(R.auto + (LANG === 'en' ? ' bet(s) auto-archived (confirmed loss).' : ' بلیت به‌دلیل باخت قطعی خودکار به بایگانی رفت.'), 6000);
+  if (R.auto) toast(R.auto + ' بلیت به‌دلیل باخت قطعی خودکار به بایگانی رفت.', 6000);
 }
 function renderList() { const l = $('#list'); if (l) l.innerHTML = U.tab == 'hist' ? listHist() : listBets(); bulk(); }
 function bulk() {
   const bar = $('#bulk'); if (!bar) return; bar.hidden = !U.sel || !(U.tab == 'bets' || U.tab == 'hist'); if (bar.hidden) return;
   const n = U.sel.size, h = U.tab == 'hist';
-  bar.innerHTML = `<span>${n} ${t('selectedCount')}</span><button class="btn" data-a="bk-all">${t('selectAll')}</button><button class="btn p" data-a="${h ? 'bk-un' : 'bk-ar'}"${n ? '' : ' disabled'}>${h ? t('restore') : t('archive')}</button><button class="btn" data-a="bk-del"${n ? '' : ' disabled'}>${t('delete')}</button><button class="btn" data-a="bk-off">${t('done')}</button>`;
+  bar.innerHTML = `<span>${n} انتخاب</span><button class="btn" data-a="bk-all">انتخاب همه</button><button class="btn p" data-a="${h ? 'bk-un' : 'bk-ar'}"${n ? '' : ' disabled'}>${h ? 'بازگردانی' : 'بایگانی'}</button><button class="btn" data-a="bk-del"${n ? '' : ' disabled'}>حذف</button><button class="btn" data-a="bk-off">پایان</button>`;
 }

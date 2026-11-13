@@ -1,5 +1,4 @@
-Betslip - Update: 2.2.0 (Betslip Update 16)
-
+Betslip - Update: 2.0.0 (Betslip Update 14)
 
 # Betslip
 Vercel + Upstash Redis. ساختار:
