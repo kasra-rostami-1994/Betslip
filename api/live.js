@@ -2,9 +2,7 @@
 const { kv } = require('./_lib');
 const iso = (d) => d.toISOString().slice(0, 10);
 const get = async (u, h) => { const r = await fetch(u, { headers: h, signal: AbortSignal.timeout(7000) }); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); };
-const LMETA = { 'tur.1': ['Super Lig', 'Turkey'], 'tur.2': ['1. Lig', 'Turkey'], 'cze.1': ['Czech Liga', 'Czechia'], 'bel.1': ['Pro League', 'Belgium'], 'ned.1': ['Eredivisie', 'Netherlands'], 'ned.2': ['Eerste Divisie', 'Netherlands'], 'por.1': ['Primeira Liga', 'Portugal'], 'fra.1': ['Ligue 1', 'France'], 'fra.2': ['Ligue 2', 'France'], 'ger.1': ['Bundesliga', 'Germany'], 'ger.2': ['2. Bundesliga', 'Germany'], 'ita.1': ['Serie A', 'Italy'], 'ita.2': ['Serie B', 'Italy'], 'esp.1': ['La Liga', 'Spain'], 'esp.2': ['La Liga 2', 'Spain'], 'eng.1': ['Premier League', 'England'], 'eng.2': ['Championship', 'England'], 'eng.3': ['League One', 'England'], 'aut.1': ['Bundesliga', 'Austria'], 'den.1': ['Superliga', 'Denmark'], 'gre.1': ['Super League', 'Greece'], 'nor.1': ['Eliteserien', 'Norway'], 'pol.1': ['Ekstraklasa', 'Poland'], 'rou.1': ['Liga I', 'Romania'], 'sco.1': ['Premiership', 'Scotland'], 'srb.1': ['SuperLiga', 'Serbia'], 'swe.1': ['Allsvenskan', 'Sweden'], 'sui.1': ['Super League', 'Switzerland'], 'irn.1': ['Persian Gulf Pro League', 'Iran'],
-  'uefa.champions': ['UEFA Champions League', 'International'], 'uefa.europa': ['UEFA Europa League', 'International'], 'uefa.europa.conf': ['UEFA Conference League', 'International'], 'uefa.nations': ['UEFA Nations League', 'International'], 'fifa.world': ['FIFA World Cup', 'International'], 'fifa.worldq.uefa': ['World Cup Qualifying (Europe)', 'International'], 'uefa.euro': ['UEFA European Championship', 'International'], 'conmebol.libertadores': ['Copa Libertadores', 'International'], 'concacaf.league': ['CONCACAF Champions Cup', 'International'] };
-const LEAGUES = Object.keys(LMETA);
+const LEAGUES = ['tur.1','tur.2','cze.1','bel.1','ned.1','ned.2','por.1','fra.1','fra.2','ger.1','ger.2','ita.1','ita.2','esp.1','esp.2','eng.1','eng.2','eng.3','aut.1','den.1','gre.1','nor.1','pol.1','rou.1','sco.1','srb.1','swe.1','sui.1','irn.1'];
 const espnEv = (e) => {
   const comp = e.competitions[0], c = comp.competitors, H = c.find((x) => x.homeAway == 'home'), A = c.find((x) => x.homeAway == 'away'), S = e.status;
   const nm0 = S.type.name || '', bad = /POSTPON|CANCEL|ABANDON|FORFEIT/i.test(nm0) || (S.type.state == 'post' && S.type.completed === false), ext = !bad && (S.period > 2 || /AET|PEN|EXTRA/i.test(nm0));
@@ -19,9 +17,9 @@ module.exports = async (q, s) => {
   const B = 'https://site.api.espn.com/apis/site/v2/sports/soccer/';
   const src = {
     espn: async () => {
-      const jobs = [...days.map((d) => get(B + 'all/scoreboard?limit=1000&dates=' + iso(d).replace(/-/g, ''))), ...LEAGUES.map((l) => get(B + l + '/scoreboard?limit=300&dates=' + rng).then((j) => ({ ...j, _lg: LMETA[l][0], _co: LMETA[l][1] })).catch(() => null))];
+      const jobs = [...days.map((d) => get(B + 'all/scoreboard?limit=1000&dates=' + iso(d).replace(/-/g, ''))), ...LEAGUES.map((l) => get(B + l + '/scoreboard?limit=300&dates=' + rng).then((j) => ({ ...j, _lg: (j.leagues && j.leagues[0] && j.leagues[0].name) || '' })).catch(() => null))];
       const out = new Map();
-      (await Promise.allSettled(jobs)).forEach((r) => { if (r.status == 'fulfilled' && r.value) (r.value.events || []).forEach((e) => { try { const v = espnEv(e); v.lg = r.value._lg || ''; v.co = r.value._co || ''; out.set(v.home + '|' + v.away + '|' + v.t, v); } catch (x) {} }); });
+      (await Promise.allSettled(jobs)).forEach((r) => { if (r.status == 'fulfilled' && r.value) (r.value.events || []).forEach((e) => { try { const v = espnEv(e); v.lg = r.value._lg || ''; out.set(v.home + '|' + v.away + '|' + v.t, v); } catch (x) {} }); });
       if (!out.size) throw new Error('بدون نتیجه');
       return [...out.values()];
     },
@@ -30,13 +28,13 @@ module.exports = async (q, s) => {
       const js = await Promise.all(days.map((d) => get('https://api.sofascore.com/api/v1/sport/football/scheduled-events/' + iso(d), H)));
       return js.flatMap((j) => (j.events || []).map((e) => {
         const T = e.status.type, cp = e.time && e.time.currentPeriodStartTimestamp, hs = e.homeScore || {}, as = e.awayScore || {}, nt = hs.normaltime != null;
-        return { home: e.homeTeam.name, away: e.awayTeam.name, t: new Date(e.startTimestamp * 1000).toISOString(), st: T == 'finished' ? 'post' : T == 'inprogress' ? 'in' : 'pre', h: (nt ? hs.normaltime : hs.current) || 0, a: (nt ? as.normaltime : as.current) || 0, clk: e.status.description || '', min: T == 'inprogress' && cp ? Math.floor((Date.now() / 1000 - cp) / 60) + (e.status.code == 7 ? 45 : 0) : 0, over: nt ? 1 : 0, aet: nt && T == 'finished' ? 1 : 0, w: e.winnerCode == 1 ? 1 : e.winnerCode == 2 ? 2 : 0, lg: (e.tournament && e.tournament.name) || '', co: (e.tournament && e.tournament.category && e.tournament.category.name) || '' };
+        return { home: e.homeTeam.name, away: e.awayTeam.name, t: new Date(e.startTimestamp * 1000).toISOString(), st: T == 'finished' ? 'post' : T == 'inprogress' ? 'in' : 'pre', h: (nt ? hs.normaltime : hs.current) || 0, a: (nt ? as.normaltime : as.current) || 0, clk: e.status.description || '', min: T == 'inprogress' && cp ? Math.floor((Date.now() / 1000 - cp) / 60) + (e.status.code == 7 ? 45 : 0) : 0, over: nt ? 1 : 0, aet: nt && T == 'finished' ? 1 : 0, w: e.winnerCode == 1 ? 1 : e.winnerCode == 2 ? 2 : 0, lg: (e.tournament && e.tournament.name) || '' };
       }));
     },
     fd: async () => { // اختیاری: football-data.org
       if (!process.env.FOOTBALL_DATA_KEY) throw new Error('بدون کلید');
       const j = await get(`https://api.football-data.org/v4/matches?dateFrom=${iso(days[0])}&dateTo=${iso(days[3])}`, { 'X-Auth-Token': process.env.FOOTBALL_DATA_KEY });
-      return j.matches.map((m) => { const sc = m.score || {}, rt = sc.regularTime, x = sc.duration && sc.duration != 'REGULAR'; return { home: m.homeTeam.name, away: m.awayTeam.name, t: m.utcDate, st: m.status == 'FINISHED' ? 'post' : ['IN_PLAY', 'PAUSED'].includes(m.status) ? 'in' : 'pre', h: (rt ? rt.home : sc.fullTime.home) ?? 0, a: (rt ? rt.away : sc.fullTime.away) ?? 0, clk: m.status == 'PAUSED' ? 'HT' : '', min: 0, over: x ? 1 : 0, aet: x && m.status == 'FINISHED' ? 1 : 0, w: sc.winner == 'HOME_TEAM' ? 1 : sc.winner == 'AWAY_TEAM' ? 2 : 0, lg: (m.competition && m.competition.name) || '', co: (m.area && m.area.name) || '' }; });
+      return j.matches.map((m) => { const sc = m.score || {}, rt = sc.regularTime, x = sc.duration && sc.duration != 'REGULAR'; return { home: m.homeTeam.name, away: m.awayTeam.name, t: m.utcDate, st: m.status == 'FINISHED' ? 'post' : ['IN_PLAY', 'PAUSED'].includes(m.status) ? 'in' : 'pre', h: (rt ? rt.home : sc.fullTime.home) ?? 0, a: (rt ? rt.away : sc.fullTime.away) ?? 0, clk: m.status == 'PAUSED' ? 'HT' : '', min: 0, over: x ? 1 : 0, aet: x && m.status == 'FINISHED' ? 1 : 0, w: sc.winner == 'HOME_TEAM' ? 1 : sc.winner == 'AWAY_TEAM' ? 2 : 0, lg: (m.competition && m.competition.name) || '' }; });
     },
     apif: async () => { // اختیاری: API-Football؛ فقط وقتی کلاینت بازی پیدانشده دارد، با کش Redis
       const key = process.env.APIFOOTBALL_KEY;
@@ -48,14 +46,14 @@ module.exports = async (q, s) => {
       js.forEach((j) => { const er = j.errors; if (er && Object.keys(er).length) throw new Error(Object.values(er)[0]); });
       const out = js.flatMap((j) => (j.response || []).map((f) => {
         const S = f.fixture.status.short, x = ['AET', 'PEN', 'ET', 'BT', 'P'].includes(S), ft = f.score && f.score.fulltime;
-        return { home: f.teams.home.name, away: f.teams.away.name, t: f.fixture.date, st: ['FT', 'AET', 'PEN'].includes(S) ? 'post' : ['NS', 'TBD', 'PST', 'CANC', 'ABD', 'AWD', 'WO'].includes(S) ? 'pre' : 'in', h: (x && ft && ft.home != null ? ft.home : f.goals.home) ?? 0, a: (x && ft && ft.away != null ? ft.away : f.goals.away) ?? 0, clk: S, min: f.fixture.status.elapsed || 0, over: x ? 1 : 0, aet: ['AET', 'PEN'].includes(S) ? 1 : 0, w: f.teams.home.winner ? 1 : f.teams.away.winner ? 2 : 0, lg: (f.league && f.league.name) || '', co: (f.league && f.league.country) || '' };
+        return { home: f.teams.home.name, away: f.teams.away.name, t: f.fixture.date, st: ['FT', 'AET', 'PEN'].includes(S) ? 'post' : ['NS', 'TBD', 'PST', 'CANC', 'ABD', 'AWD', 'WO'].includes(S) ? 'pre' : 'in', h: (x && ft && ft.home != null ? ft.home : f.goals.home) ?? 0, a: (x && ft && ft.away != null ? ft.away : f.goals.away) ?? 0, clk: S, min: f.fixture.status.elapsed || 0, over: x ? 1 : 0, aet: ['AET', 'PEN'].includes(S) ? 1 : 0, w: f.teams.home.winner ? 1 : f.teams.away.winner ? 2 : 0, lg: (f.league && f.league.name) || '' };
       }));
       try { await kv(['SET', ck, JSON.stringify(out), 'EX', String(+process.env.APIF_CACHE_SEC || 600)]); } catch (x) {}
       return out;
     },
     tsdb: async () => (await Promise.all(days.map((d) => get('https://www.thesportsdb.com/api/v1/json/3/eventsday.php?s=Soccer&d=' + iso(d))))).flatMap((j) => (j.events || []).map((e) => {
       const S = e.strStatus || '';
-      return { home: e.strHomeTeam, away: e.strAwayTeam, t: e.strTimestamp ? e.strTimestamp.replace(/Z?$/, 'Z') : null, st: /^(FT|AET|PEN|Match Finished)/i.test(S) ? 'post' : (!S || /^(NS|TBD)|not started|postpon|cancel|abandon|susp/i.test(S)) ? 'pre' : 'in', h: +e.intHomeScore || 0, a: +e.intAwayScore || 0, clk: S, min: 0, lg: e.strLeague || '' };
+      return { home: e.strHomeTeam, away: e.strAwayTeam, t: e.strTimestamp ? e.strTimestamp.replace(/Z?$/, 'Z') : null, st: /^(FT|AET|PEN|Match Finished)/i.test(S) ? 'post' : (!S || /^(NS|TBD)|not started|postpon|cancel|abandon|susp/i.test(S)) ? 'pre' : 'in', h: +e.intHomeScore || 0, a: +e.intAwayScore || 0, clk: S, min: 0 };
     })),
   };
   const names = Object.keys(src), res = await Promise.allSettled(names.map((n) => src[n]()));
