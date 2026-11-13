@@ -1,5 +1,5 @@
 /* app.js: مسیریابی، اکشن‌ها، زمان‌بندی نتایج، راه‌اندازی */
-const VER = '2.0.0';
+const VER = '2.1.0';
 const ent = new URLSearchParams(location.search);
 U.entry = ent.get('s') ? { tab: 'share', t: ent.get('s') } : ent.get('u') ? { tab: 'u', u: ent.get('u') } : null;
 function route() {
